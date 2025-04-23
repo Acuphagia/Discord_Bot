@@ -4,6 +4,7 @@ use serenity::async_trait;
 use serenity::Client;
 use serenity::model::gateway::GatewayIntents;
 use std::env;
+use tokio::net::TcpListener;
 use dotenv::dotenv;
 
 struct Handler;
@@ -47,6 +48,18 @@ impl EventHandler for Handler
 #[tokio::main]
 async fn main()
 {
+
+    let listener = TcpListener::bind("0.0.0.0:8080")
+        .await
+        .expect("Failed to bind listener");
+    println!("Keep-alive server running...");
+    loop
+    {
+        let _ = listener
+            .accept()
+            .await;
+    }
+
     dotenv()
         .ok();
     // Load the environment variables from the .env file
@@ -68,3 +81,4 @@ async fn main()
         println!("Client error: {:?}", why);
     }
 }
+
