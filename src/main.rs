@@ -6,7 +6,7 @@ use serenity::model::gateway::GatewayIntents;
 use std::env;
 use tokio::net::TcpListener;
 use dotenv::dotenv;
-
+use tokio::task;
 struct Handler;
 
 #[async_trait]
@@ -19,7 +19,8 @@ impl EventHandler for Handler
         msg: Message
     )
     {
-        println!("Message received: {}", msg.content);
+        println!("Message received: {}", msg
+            .content);
 
         if msg
             .content
@@ -49,16 +50,22 @@ impl EventHandler for Handler
 async fn main()
 {
 
-    let listener = TcpListener::bind("0.0.0.0:8080")
-        .await
-        .expect("Failed to bind listener");
-    println!("Keep-alive server running...");
-    loop
-    {
-        let _ = listener
-            .accept()
-            .await;
-    }
+    tokio::spawn(async
+        {
+        let listener = TcpListener::bind("0.0.0.0:8080")
+            .await
+            .expect("Failed to bind listener");
+        println!("Keep-alive server running...");
+        loop
+        {
+            if let Err(e) = listener
+                .accept()
+                .await
+                {
+                println!("Failed to accept connection: {:?}", e);
+            }
+        }
+    });    
 
     dotenv()
         .ok();
