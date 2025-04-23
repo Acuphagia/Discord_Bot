@@ -9,13 +9,23 @@ use dotenv::dotenv;
 use once_cell::sync::Lazy;
 use std::fs;
 use rand::Rng;
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct KindWords(Vec<String>);
 
 static VERY_KIND_WORDS: Lazy<Vec<String>> = Lazy::new(||
     {
-    let data = fs::read_to_string("very_kind_words.json")
+    let data = fs
+        ::read_to_string("very_kind_words.json")
         .expect("Unable to read file");
-    serde_json::from_str(&data)
-        .expect("JSON was not properly formatted")
+
+    let kind_words: KindWords = serde_json
+        ::from_str(&data)
+        .expect("JSON was not properly formatted");
+
+    kind_words
+        .0
 });
 
 static RANDOM_MESSAGES: &[&str] = &[
@@ -29,11 +39,14 @@ static RANDOM_MESSAGES: &[&str] = &[
     "Your message was too long or contained inappropriate content. Please try again."
 ];
 
-fn random_responses()
+fn random_response() -> &'static str
 {
-    let random_responses = rand::thread_rng()
+    let index = rand
+        ::thread_rng()
         .gen_range(0..RANDOM_MESSAGES
             .len());
+
+    RANDOM_MESSAGES[index]
 }
 
 struct Handler;
@@ -41,8 +54,6 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler
 {
-
-    
     async fn message
     (
         &self,
@@ -50,29 +61,27 @@ impl EventHandler for Handler
         msg: Message
     )
     {
-        println!("Message received: {}", msg
-            .content);
+        println!("Message received: {}", msg.content);
 
         if msg
             .content
-                .len() > 200       
+            .len() > 200
+
             || VERY_KIND_WORDS
                 .iter()
-                    .any(|word| msg
+                .any(|word|
+                    msg
                         .content
                         .to_lowercase()
-<<<<<<< HEAD
                         .contains(word))
-                    {               
-        println!("Rogue Message Detected. Attempting deletion...");
-        
-=======
-                        // Removed the actual bad word for obvious reasons
-                        .contains("skibidi")
-        {
-            println!("Message exceeds 200 characters. Attempting deletion...");
 
->>>>>>> 5a56ecaa53be91f54e55ff280153b5199c4638bb
+            || msg
+                .content
+                .to_lowercase()
+                .contains("skibidi")
+        {
+            println!("Rogue Message Detected. Attempting deletion...");
+
             if let Err(why) = msg
                 .delete(&ctx.http)
                 .await
@@ -82,9 +91,10 @@ impl EventHandler for Handler
             else
             {
                 println!("Message deleted successfully.");
+
                 if let Err(why) = msg
                     .channel_id
-                    .say(&ctx.http, "{random_responses}}")
+                    .say(&ctx.http, format!("{}", random_response()))
                     .await
                 {
                     println!("Error sending message: {:?}", why);
@@ -101,34 +111,40 @@ impl EventHandler for Handler
 #[tokio::main]
 async fn main()
 {
-
     tokio::spawn(async
-        {
-        let listener = TcpListener::bind("0.0.0.0:8080")
+    {
+        let listener = TcpListener
+            ::bind("0.0.0.0:8080")
             .await
             .expect("Failed to bind listener");
+
         println!("Keep-alive server running...");
+
         loop
         {
             if let Err(e) = listener
                 .accept()
                 .await
-                {
+            {
                 println!("Failed to accept connection: {:?}", e);
             }
         }
-    });    
+    });
 
     dotenv()
         .ok();
-    // Load the environment variables from the .env file
-    let token = env::var("DISCORD_TOKEN")
+
+    let token = env
+        ::var("DISCORD_TOKEN")
         .expect("Expected a token in the environment");
 
-    let intents = GatewayIntents::GUILD_MESSAGES 
-        | GatewayIntents::MESSAGE_CONTENT;
+    let intents = GatewayIntents
+        ::GUILD_MESSAGES
+        | GatewayIntents
+            ::MESSAGE_CONTENT;
 
-    let mut client = Client::builder(token, intents)
+    let mut client = Client
+        ::builder(token, intents)
         .event_handler(Handler)
         .await
         .expect("Error creating client");
