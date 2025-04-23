@@ -28,7 +28,8 @@ impl EventHandler for Handler
                     || msg
                         .content
                         .to_lowercase()
-                        .contains("nigger")
+                        // Removed the actual bad word for obvious reasons
+                        .contains("skibidi")
         {
             println!("Message exceeds 200 characters. Attempting deletion...");
 
