@@ -6,12 +6,43 @@ use serenity::model::gateway::GatewayIntents;
 use std::env;
 use tokio::net::TcpListener;
 use dotenv::dotenv;
-use tokio::task;
+use once_cell::sync::Lazy;
+use std::fs;
+use rand::Rng;
+
+static VERY_KIND_WORDS: Lazy<Vec<String>> = Lazy::new(||
+    {
+    let data = fs::read_to_string("very_kind_words.json")
+        .expect("Unable to read file");
+    serde_json::from_str(&data)
+        .expect("JSON was not properly formatted")
+});
+
+static RANDOM_MESSAGES: &[&str] = &[
+    "Please keep your messages under 200 characters, & avoid using very bad words.",
+    "Your message was too long or contained inappropriate content. Please try again.",
+    "Your message was deleted because it was too long or contained inappropriate content.",
+    "We appreciate your enthusiasm, but please keep your messages concise and respectful.",
+    "Your message was flagged for review due to its length or content. Please adhere to the guidelines.",
+    "Your message was removed for being too long or containing inappropriate content. Please be mindful of our community standards.",
+    "Your message was deleted because it exceeded the character limit or contained inappropriate content.",
+    "Your message was too long or contained inappropriate content. Please try again."
+];
+
+fn random_responses()
+{
+    let random_responses = rand::thread_rng()
+        .gen_range(0..RANDOM_MESSAGES
+            .len());
+}
+
 struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler
 {
+
+    
     async fn message
     (
         &self,
@@ -24,14 +55,16 @@ impl EventHandler for Handler
 
         if msg
             .content
-                .len() > 200
-                    || msg
+                .len() > 200       
+            || VERY_KIND_WORDS
+                .iter()
+                    .any(|word| msg
                         .content
                         .to_lowercase()
-                        .contains("nigger")
-        {
-            println!("Message exceeds 200 characters. Attempting deletion...");
-
+                        .contains(word))
+                    {               
+        println!("Rogue Message Detected. Attempting deletion...");
+        
             if let Err(why) = msg
                 .delete(&ctx.http)
                 .await
@@ -41,6 +74,13 @@ impl EventHandler for Handler
             else
             {
                 println!("Message deleted successfully.");
+                if let Err(why) = msg
+                    .channel_id
+                    .say(&ctx.http, "{random_responses}}")
+                    .await
+                {
+                    println!("Error sending message: {:?}", why);
+                }
             }
         }
         else
@@ -92,4 +132,3 @@ async fn main()
         println!("Client error: {:?}", why);
     }
 }
-
