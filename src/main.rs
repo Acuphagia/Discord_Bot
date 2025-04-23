@@ -83,7 +83,8 @@ impl EventHandler for Handler
             println!("Rogue Message Detected. Attempting deletion...");
 
             if let Err(why) = msg
-                .delete(&ctx.http)
+                .delete(&ctx
+                    .http)
                 .await
             {
                 println!("Error deleting message: {:?}", why);
