@@ -25,6 +25,10 @@ impl EventHandler for Handler
         if msg
             .content
                 .len() > 200
+                    || msg
+                        .content
+                        .to_lowercase()
+                        .contains("nigger")
         {
             println!("Message exceeds 200 characters. Attempting deletion...");
 
