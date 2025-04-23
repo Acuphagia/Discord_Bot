@@ -61,10 +61,18 @@ impl EventHandler for Handler
                     .any(|word| msg
                         .content
                         .to_lowercase()
+<<<<<<< HEAD
                         .contains(word))
                     {               
         println!("Rogue Message Detected. Attempting deletion...");
         
+=======
+                        // Removed the actual bad word for obvious reasons
+                        .contains("skibidi")
+        {
+            println!("Message exceeds 200 characters. Attempting deletion...");
+
+>>>>>>> 5a56ecaa53be91f54e55ff280153b5199c4638bb
             if let Err(why) = msg
                 .delete(&ctx.http)
                 .await
